@@ -1,0 +1,65 @@
+name: Build & Push Twenty to ECR
+
+on:
+  push:
+    branches:
+      - local-v1.2.0 
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  AWS_REGION: us-west-1  # Change to your region
+  ECR_REPOSITORY: twenty
+  IMAGE_TAG: latest
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-deploy-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Pull previous image for cache
+        run: |
+          docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} || true
+
+
+      - name: Build docker 
+        run: |
+          docker build --platform linux/amd64 \
+            --cache-from ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} \
+            -f packages/twenty-docker/twenty/Dockerfile \
+            -t twenty:latest \
+            .
+          docker tag twenty:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+      - name: Push image to ECR
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+      - name: Force ECS service to deploy new task definition
+        run: |
+          aws ecs update-service \
+            --cluster twenty-cluster \
+            --service twenty-server-service \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+          aws ecs update-service \
+            --cluster twenty-cluster \
+            --service twenty-worker-service \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+

@@ -34,4 +34,9 @@ export class CreateUserAndWorkspaceInput {
   @IsString()
   @IsOptional()
   captchaToken?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsString()
+  @IsOptional()
+  workspaceName?: string;
 }
