@@ -6,8 +6,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeORMModule } from 'src/database/typeorm/typeorm.module';
 import { ApiKey } from 'src/engine/core-modules/api-key/api-key.entity';
 import { ApiKeyModule } from 'src/engine/core-modules/api-key/api-key.module';
+import { ApiKeyService } from 'src/engine/core-modules/api-key/api-key.service';
 import { AppToken } from 'src/engine/core-modules/app-token/app-token.entity';
 import { AppTokenService } from 'src/engine/core-modules/app-token/services/app-token.service';
+import { ApiAuthController } from 'src/engine/core-modules/auth/controllers/api-auth.controller';
 import { GoogleAPIsAuthController } from 'src/engine/core-modules/auth/controllers/google-apis-auth.controller';
 import { GoogleAuthController } from 'src/engine/core-modules/auth/controllers/google-auth.controller';
 import { MicrosoftAPIsAuthController } from 'src/engine/core-modules/auth/controllers/microsoft-apis-auth.controller';
@@ -55,7 +57,12 @@ import { WorkspaceModule } from 'src/engine/core-modules/workspace/workspace.mod
 import { DataSourceModule } from 'src/engine/metadata-modules/data-source/data-source.module';
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
 import { PermissionsModule } from 'src/engine/metadata-modules/permissions/permissions.module';
+import { RoleTargetsEntity } from 'src/engine/metadata-modules/role/role-targets.entity';
+import { RoleEntity } from 'src/engine/metadata-modules/role/role.entity';
+import { RoleService } from 'src/engine/metadata-modules/role/role.service';
 import { UserRoleModule } from 'src/engine/metadata-modules/user-role/user-role.module';
+import { UserRoleService } from 'src/engine/metadata-modules/user-role/user-role.service';
+import { WorkspacePermissionsCacheModule } from 'src/engine/metadata-modules/workspace-permissions-cache/workspace-permissions-cache.module';
 import { WorkspaceDataSourceModule } from 'src/engine/workspace-datasource/workspace-datasource.module';
 import { WorkspaceManagerModule } from 'src/engine/workspace-manager/workspace-manager.module';
 import { ConnectedAccountModule } from 'src/modules/connected-account/connected-account.module';
@@ -89,6 +96,8 @@ import { JwtAuthStrategy } from './strategies/jwt.auth.strategy';
         KeyValuePair,
         UserWorkspace,
         TwoFactorAuthenticationMethod,
+        RoleEntity,
+        RoleTargetsEntity,
       ],
       'core',
     ),
@@ -109,6 +118,7 @@ import { JwtAuthStrategy } from './strategies/jwt.auth.strategy';
     UserRoleModule,
     TwoFactorAuthenticationModule,
     ApiKeyModule,
+    WorkspacePermissionsCacheModule,
   ],
   controllers: [
     GoogleAuthController,
@@ -116,6 +126,7 @@ import { JwtAuthStrategy } from './strategies/jwt.auth.strategy';
     GoogleAPIsAuthController,
     MicrosoftAPIsAuthController,
     SSOAuthController,
+    ApiAuthController,
   ],
   providers: [
     SignInUpService,
@@ -143,13 +154,16 @@ import { JwtAuthStrategy } from './strategies/jwt.auth.strategy';
     CreateConnectedAccountService,
     UpdateConnectedAccountOnReconnectService,
     TransientTokenService,
+    ApiKeyService,
     AuthSsoService,
+    RoleService,
+    UserRoleService,
   ],
   exports: [
     AccessTokenService,
     LoginTokenService,
     RefreshTokenService,
-    CreateMessageFolderService,
+    RoleService,
   ],
 })
 export class AuthModule {}
