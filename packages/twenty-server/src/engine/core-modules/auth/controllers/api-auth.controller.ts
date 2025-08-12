@@ -120,6 +120,7 @@ export class ApiAuthController {
         name: 'Webapp',
         workspaceId: workspace.id,
         expiresAt,
+        roleId: adminRole.id,
       });
 
       const apiToken = await this.apiKeyService.generateApiKeyToken(

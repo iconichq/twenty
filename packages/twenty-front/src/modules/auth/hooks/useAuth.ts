@@ -480,14 +480,7 @@ export const useAuth = () => {
 
       setSignInUpStep(SignInUpStep.WorkspaceSelection);
     },
-    [
-      signUp,
-      handleSetAuthTokens,
-      loadCurrentUser,
-      setSignInUpStep,
-      isWorkspaceCreationLimitedToAdmins,
-      createWorkspace,
-    ],
+    [signUp, isEmailVerificationRequired, handleSetAuthTokens, loadCurrentUser, setSignInUpStep, setSearchParams, isWorkspaceCreationLimitedToAdmins, createWorkspace],
   );
 
   const handleCredentialsSignInInWorkspace = useCallback(
