@@ -163,6 +163,7 @@ import { JwtAuthStrategy } from './strategies/jwt.auth.strategy';
     AccessTokenService,
     LoginTokenService,
     RefreshTokenService,
+    CreateMessageFolderService,
     RoleService,
   ],
 })
