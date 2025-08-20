@@ -76,7 +76,7 @@ export class ApiAuthController {
         userWorkspaceId: userWorkspace.id,
         payload: {
           id: workspace.id,
-          isPasswordAuthEnabled: false,
+          isPasswordAuthEnabled: true,
           defaultRoleId: memberRole?.id,
           displayName: userData.workspaceName,
         },
