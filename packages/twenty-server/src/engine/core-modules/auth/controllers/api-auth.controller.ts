@@ -86,7 +86,7 @@ export class ApiAuthController {
       // this will allow us to change the broker's user into a controlled 'member' account
       // twenty won't allow a workspace with no admin account assigned
       const superAdminUser =
-        await this.userService.getUserByEmail('tim@apple.dev');
+        await this.userService.getUserByEmail('accounts@iconic.co');
 
       await this.userWorkspaceService.addUserToWorkspaceIfUserNotInWorkspace(
         superAdminUser,
