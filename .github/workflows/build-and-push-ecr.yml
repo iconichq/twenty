@@ -3,7 +3,7 @@ name: Build & Push Twenty to ECR
 on:
   push:
     branches:
-      - local-v1.3.0 
+      - local-v1.4.0 
   workflow_dispatch:  # Allow manual trigger
 
 env:
