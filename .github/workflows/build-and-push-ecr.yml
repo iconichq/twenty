@@ -36,6 +36,11 @@ jobs:
         run: |
           docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} || true
 
+      - name: Compile translations
+        run: |
+          npx nx run twenty-server:lingui:compile
+          npx nx run twenty-emails:lingui:compile
+          npx nx run twenty-front:lingui:compile
 
       - name: Build docker 
         run: |
