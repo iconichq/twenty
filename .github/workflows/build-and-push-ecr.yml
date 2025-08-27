@@ -36,6 +36,12 @@ jobs:
         run: |
           docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} || true
 
+      - name: Install dependencies
+        uses: ./.github/workflows/actions/yarn-install
+
+      - name: Build dependencies
+        run: npx nx build twenty-shared
+
       - name: Compile translations
         run: |
           npx nx run twenty-server:lingui:compile
