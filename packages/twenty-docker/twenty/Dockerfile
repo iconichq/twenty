@@ -28,6 +28,10 @@ COPY ./packages/twenty-emails /app/packages/twenty-emails
 COPY ./packages/twenty-shared /app/packages/twenty-shared
 COPY ./packages/twenty-server /app/packages/twenty-server
 
+# Compile messages for server and emails
+RUN npx nx run twenty-server:lingui:compile
+RUN npx nx run twenty-emails:lingui:compile
+
 RUN npx nx run twenty-server:build
 
 RUN yarn workspaces focus --production twenty-emails twenty-shared twenty-server
@@ -40,6 +44,10 @@ ARG REACT_APP_SERVER_BASE_URL
 COPY ./packages/twenty-front /app/packages/twenty-front
 COPY ./packages/twenty-ui /app/packages/twenty-ui
 COPY ./packages/twenty-shared /app/packages/twenty-shared
+
+# Compile messages for frontend
+RUN npx nx run twenty-front:lingui:compile
+
 RUN npx nx build twenty-front
 
 
