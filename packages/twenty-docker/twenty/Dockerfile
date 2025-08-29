@@ -28,6 +28,9 @@ COPY ./packages/twenty-emails /app/packages/twenty-emails
 COPY ./packages/twenty-shared /app/packages/twenty-shared
 COPY ./packages/twenty-server /app/packages/twenty-server
 
+# Build shared first
+RUN npx nx build twenty-shared
+
 # Compile messages 
 RUN npx nx run twenty-server:lingui:compile
 RUN npx nx run twenty-front:lingui:compile
