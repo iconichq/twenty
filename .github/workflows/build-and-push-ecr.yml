@@ -45,3 +45,21 @@ jobs:
             -t twenty:${{ env.IMAGE_TAG }} \
             .
           docker tag twenty:${{ env.IMAGE_TAG }} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+      - name: Push image to ECR
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+      # - name: Force ECS service to deploy new task definition
+      #   run: |
+      #     aws ecs update-service \
+      #       --cluster twenty-cluster \
+      #       --service twenty-server-service \
+      #       --force-new-deployment \
+      #       --region ${{ env.AWS_REGION }}
+      #     aws ecs update-service \
+      #       --cluster twenty-cluster \
+      #       --service twenty-worker-service \
+      #       --force-new-deployment \
+      #       --region ${{ env.AWS_REGION }}
+
