@@ -1,7 +1,11 @@
+# ===============================
 # Base image for common dependencies
+# ===============================
 FROM node:24-alpine AS common-deps
 
 WORKDIR /app
+
+ENV NX_DAEMON=false
 
 # Copy only the necessary files for dependency resolution
 COPY ./package.json ./yarn.lock ./.yarnrc.yml ./tsconfig.base.json ./nx.json /app/
@@ -20,19 +24,33 @@ COPY ./packages/twenty-front/package.json /app/packages/twenty-front/
 RUN yarn && yarn cache clean && npx nx reset
 
 
-# Build the back
+# ===============================
+# Server build
+# ===============================
 FROM common-deps AS twenty-server-build
 
-# Copy sourcecode after installing dependences to accelerate subsequents builds
+# Copy sourcecode
 COPY ./packages/twenty-emails /app/packages/twenty-emails
 COPY ./packages/twenty-shared /app/packages/twenty-shared
 COPY ./packages/twenty-server /app/packages/twenty-server
 
+# Build shared first (needed for Lingui configs)
+RUN npx nx build twenty-shared
+
+# Compile messages
+RUN npx nx run twenty-server:lingui:compile
+RUN npx nx run twenty-emails:lingui:compile
+
+# Build the server
 RUN npx nx run twenty-server:build
 
+# Prune to production deps
 RUN yarn workspaces focus --production twenty-emails twenty-shared twenty-server
 
-# Build the front
+
+# ===============================
+# Frontend build
+# ===============================
 FROM common-deps AS twenty-front-build
 
 ARG REACT_APP_SERVER_BASE_URL
@@ -40,10 +58,20 @@ ARG REACT_APP_SERVER_BASE_URL
 COPY ./packages/twenty-front /app/packages/twenty-front
 COPY ./packages/twenty-ui /app/packages/twenty-ui
 COPY ./packages/twenty-shared /app/packages/twenty-shared
+
+# Build shared first
+RUN npx nx build twenty-shared
+
+# Compile messages
+RUN npx nx run twenty-front:lingui:compile
+
+# Build frontend
 RUN npx nx build twenty-front
 
 
-# Final stage: Run the application
+# ===============================
+# Final runtime image
+# ===============================
 FROM node:24-alpine AS twenty
 
 # Used to run healthcheck in docker
@@ -63,7 +91,7 @@ ENV REACT_APP_SERVER_BASE_URL=$REACT_APP_SERVER_BASE_URL
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 
-# Copy built applications from previous stages
+# Copy built apps
 COPY --chown=1000 --from=twenty-server-build /app /app
 COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-server /app/packages/twenty-server
 COPY --chown=1000 --from=twenty-front-build /app/packages/twenty-front/build /app/packages/twenty-server/dist/front
