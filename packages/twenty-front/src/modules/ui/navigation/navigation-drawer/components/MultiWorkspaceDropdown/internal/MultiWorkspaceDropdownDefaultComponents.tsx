@@ -2,14 +2,10 @@ import { DEFAULT_WORKSPACE_LOGO } from '@/ui/navigation/navigation-drawer/consta
 
 import { useAuth } from '@/auth/hooks/useAuth';
 import { availableWorkspacesState } from '@/auth/states/availableWorkspacesState';
-import { currentUserState } from '@/auth/states/currentUserState';
 import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { countAvailableWorkspaces } from '@/auth/utils/availableWorkspacesUtils';
-import { isWorkspaceCreationLimitedToAdminsState } from '@/client-config/states/isWorkspaceCreationLimitedToAdminsState';
 import { useBuildWorkspaceUrl } from '@/domain-manager/hooks/useBuildWorkspaceUrl';
 import { useRedirectToWorkspaceDomain } from '@/domain-manager/hooks/useRedirectToWorkspaceDomain';
-import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
-import { Dropdown } from '@/ui/layout/dropdown/components/Dropdown';
 import { DropdownContent } from '@/ui/layout/dropdown/components/DropdownContent';
 import { DropdownMenuHeader } from '@/ui/layout/dropdown/components/DropdownMenuHeader/DropdownMenuHeader';
 import { DropdownMenuHeaderLeftComponent } from '@/ui/layout/dropdown/components/DropdownMenuHeader/internal/DropdownMenuHeaderLeftComponent';
@@ -19,30 +15,23 @@ import { useCloseDropdown } from '@/ui/layout/dropdown/hooks/useCloseDropdown';
 import { MULTI_WORKSPACE_DROPDOWN_ID } from '@/ui/navigation/navigation-drawer/constants/MultiWorkspaceDropdownId';
 import { multiWorkspaceDropdownState } from '@/ui/navigation/navigation-drawer/states/multiWorkspaceDropdownState';
 import { useColorScheme } from '@/ui/theme/hooks/useColorScheme';
-import { type ApolloError } from '@apollo/client';
 import styled from '@emotion/styled';
 import { useLingui } from '@lingui/react/macro';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
-import { AppPath, SettingsPath } from 'twenty-shared/types';
+import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath } from 'twenty-shared/utils';
 import {
   Avatar,
-  IconDotsVertical,
   IconLogout,
-  IconPlus,
   IconSwitchHorizontal,
   IconUserPlus,
 } from 'twenty-ui/display';
-import { LightIconButton } from 'twenty-ui/input';
 import {
   MenuItem,
   MenuItemSelectAvatar,
   UndecoratedLink,
 } from 'twenty-ui/navigation';
-import {
-  type AvailableWorkspace,
-  useSignUpInNewWorkspaceMutation,
-} from '~/generated-metadata/graphql';
+import { type AvailableWorkspace } from '~/generated-metadata/graphql';
 import { getWorkspaceUrl } from '~/utils/getWorkspaceUrl';
 
 const StyledDescription = styled.div`
@@ -54,20 +43,13 @@ export const MultiWorkspaceDropdownDefaultComponents = () => {
   const currentWorkspace = useRecoilValue(currentWorkspaceState);
   const { t } = useLingui();
   const { redirectToWorkspaceDomain } = useRedirectToWorkspaceDomain();
-  const isWorkspaceCreationLimitedToAdmins = useRecoilValue(
-    isWorkspaceCreationLimitedToAdminsState,
-  );
-  const currentUser = useRecoilValue(currentUserState);
   const availableWorkspaces = useRecoilValue(availableWorkspacesState);
   const availableWorkspacesCount =
     countAvailableWorkspaces(availableWorkspaces);
   const { buildWorkspaceUrl } = useBuildWorkspaceUrl();
   const { closeDropdown } = useCloseDropdown();
   const { signOut } = useAuth();
-  const { enqueueErrorSnackBar } = useSnackBar();
   const { colorScheme, colorSchemeList } = useColorScheme();
-
-  const [signUpInNewWorkspaceMutation] = useSignUpInNewWorkspaceMutation();
 
   const setMultiWorkspaceDropdownState = useSetRecoilState(
     multiWorkspaceDropdownState,
@@ -78,29 +60,6 @@ export const MultiWorkspaceDropdownDefaultComponents = () => {
       getWorkspaceUrl(availableWorkspace.workspaceUrls),
     );
   };
-
-  const createWorkspace = () => {
-    signUpInNewWorkspaceMutation({
-      onCompleted: async (data) => {
-        return await redirectToWorkspaceDomain(
-          getWorkspaceUrl(data.signUpInNewWorkspace.workspace.workspaceUrls),
-          AppPath.Verify,
-          {
-            loginToken: data.signUpInNewWorkspace.loginToken.token,
-          },
-          '_blank',
-        );
-      },
-      onError: (error: ApolloError) => {
-        enqueueErrorSnackBar({
-          apolloError: error,
-        });
-      },
-    });
-  };
-
-  const workspaceCreationEnabled =
-    !isWorkspaceCreationLimitedToAdmins || currentUser?.canAccessFullAdminPanel;
 
   return (
     <DropdownContent>
@@ -114,31 +73,6 @@ export const MultiWorkspaceDropdownDefaultComponents = () => {
               />
             }
           />
-        }
-        EndComponent={
-          workspaceCreationEnabled && (
-            <Dropdown
-              clickableComponent={
-                <LightIconButton
-                  Icon={IconDotsVertical}
-                  size="small"
-                  accent="tertiary"
-                />
-              }
-              dropdownId="multi-workspace-dropdown-context-menu"
-              dropdownComponents={
-                <DropdownContent>
-                  <DropdownMenuItemsContainer>
-                    <MenuItem
-                      LeftIcon={IconPlus}
-                      text={t`Create Workspace`}
-                      onClick={createWorkspace}
-                    />
-                  </DropdownMenuItemsContainer>
-                </DropdownContent>
-              }
-            />
-          )
         }
       >
         {currentWorkspace?.displayName}
