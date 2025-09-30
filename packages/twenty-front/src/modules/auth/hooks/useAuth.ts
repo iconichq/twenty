@@ -46,6 +46,7 @@ import { apiConfigState } from '@/client-config/states/apiConfigState';
 import { captchaState } from '@/client-config/states/captchaState';
 import { isEmailVerificationRequiredState } from '@/client-config/states/isEmailVerificationRequiredState';
 import { isMultiWorkspaceEnabledState } from '@/client-config/states/isMultiWorkspaceEnabledState';
+import { isWorkspaceCreationLimitedToAdminsState } from '@/client-config/states/isWorkspaceCreationLimitedToAdminsState';
 import { sentryConfigState } from '@/client-config/states/sentryConfigState';
 import { useLastAuthenticatedWorkspaceDomain } from '@/domain-manager/hooks/useLastAuthenticatedWorkspaceDomain';
 import { useOrigin } from '@/domain-manager/hooks/useOrigin';
@@ -72,6 +73,9 @@ export const useAuth = () => {
   const { origin } = useOrigin();
   const { requestFreshCaptchaToken } = useRequestFreshCaptchaToken();
   const isMultiWorkspaceEnabled = useRecoilValue(isMultiWorkspaceEnabledState);
+  const isWorkspaceCreationLimitedToAdmins = useRecoilValue(
+    isWorkspaceCreationLimitedToAdminsState,
+  );
   const isEmailVerificationRequired = useRecoilValue(
     isEmailVerificationRequiredState,
   );
@@ -137,6 +141,9 @@ export const useAuth = () => {
         const isMultiWorkspaceEnabled = snapshot
           .getLoadable(isMultiWorkspaceEnabledState)
           .getValue();
+        const isWorkspaceCreationLimitedToWorkspaceAdmins = snapshot
+          .getLoadable(isWorkspaceCreationLimitedToAdminsState)
+          .getValue();
         const domainConfiguration = snapshot
           .getLoadable(domainConfigurationState)
           .getValue();
@@ -162,6 +169,10 @@ export const useAuth = () => {
           set(clientConfigApiStatusState, clientConfigApiStatus);
           set(isCurrentUserLoadedState, isCurrentUserLoaded);
           set(isMultiWorkspaceEnabledState, isMultiWorkspaceEnabled);
+          set(
+            isWorkspaceCreationLimitedToAdminsState,
+            isWorkspaceCreationLimitedToWorkspaceAdmins,
+          );
           set(domainConfigurationState, domainConfiguration);
           return undefined;
         });
@@ -387,7 +398,12 @@ export const useAuth = () => {
           );
 
           if (availableWorkspacesCount === 0) {
-            return createWorkspace();
+            if (
+              !isWorkspaceCreationLimitedToAdmins ||
+              user.canAccessFullAdminPanel
+            ) {
+              return createWorkspace();
+            }
           }
 
           if (availableWorkspacesCount === 1) {
@@ -422,13 +438,14 @@ export const useAuth = () => {
       });
     },
     [
-      handleSetAuthTokens,
-      redirectToWorkspaceDomain,
       signIn,
+      handleSetAuthTokens,
       loadCurrentUser,
-      setSearchParams,
       setSignInUpStep,
+      isWorkspaceCreationLimitedToAdmins,
       createWorkspace,
+      redirectToWorkspaceDomain,
+      setSearchParams,
     ],
   );
 
@@ -462,18 +479,24 @@ export const useAuth = () => {
       const { user } = await loadCurrentUser();
 
       if (countAvailableWorkspaces(user.availableWorkspaces) === 0) {
-        return await createWorkspace({ newTab: false });
+        if (
+          !isWorkspaceCreationLimitedToAdmins ||
+          user.canAccessFullAdminPanel
+        ) {
+          return await createWorkspace({ newTab: false });
+        }
       }
 
       setSignInUpStep(SignInUpStep.WorkspaceSelection);
     },
     [
-      isEmailVerificationRequired,
-      setSearchParams,
-      handleSetAuthTokens,
       signUp,
+      isEmailVerificationRequired,
+      handleSetAuthTokens,
       loadCurrentUser,
       setSignInUpStep,
+      setSearchParams,
+      isWorkspaceCreationLimitedToAdmins,
       createWorkspace,
     ],
   );
@@ -563,12 +586,12 @@ export const useAuth = () => {
     },
     [
       signUpInWorkspace,
-      workspacePublicData,
+      workspacePublicData?.id,
+      isEmailVerificationRequired,
       isMultiWorkspaceEnabled,
       handleGetAuthTokensFromLoginToken,
-      setSignInUpStep,
       setSearchParams,
-      isEmailVerificationRequired,
+      setSignInUpStep,
       redirectToWorkspaceDomain,
     ],
   );
